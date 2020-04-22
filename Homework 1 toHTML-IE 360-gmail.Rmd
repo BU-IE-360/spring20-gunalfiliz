@@ -1,0 +1,183 @@
+---
+title: "Homework 1- IE360"
+author: "Filiz Günal - IE360 - SPRING 2020"
+date: "22 04 2020"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## INTRODUCTION
+
+#  In last 5 years, the exchange rates have been rapidly changed. It had important effects on Turkey's economy. The main aim of the analysis is to observe the relationship of the change of exchange rates between the Turkey's economy in last 5 years. The analysis is conducted with dollar selling and euro selling levels as exchange rates, and level of seaonally adjusted capacity utilization rate of manufacturing industry as well as unemployment rate and search volume of job advertisement on Google from Turkey. The data are token both from Electronic Data Delivery System and Google. 
+
+## APPROACH 
+
+#  There were some NA values in the data. However, these NA values were belonged to last 3 months. Due to pandemic, these data would not contribute to the analysis. Therefore, NA values are omitted from the data. Also, the data is filtered in order to obtain the last 5 years' data. The reason behind analysing last 5 years' data is minimizing the effects of other than exchange rate on the change of level of seaonally adjusted capacity utilization rate of manufacturing industry as well as unemployment rate and search volume of job advertisement on Google from Turkey. Besides, these data are merged and an extended time series object is created. These steps are given in the code below. 
+
+```{r}
+require(readxl) # to read excel input
+require(data.table) # to use data.table functionalities
+require(corrplot)
+require(anytime)
+require(xts)
+
+data_path = '/Users/nevalgunal/Downloads/EVDS.xlsx'
+
+# read the data
+dat = read_excel(data_path, sheet='EVDS', n_max=152)
+
+# transform the data
+evds = data.table(dat)
+
+# display the structure of the data
+str(evds)
+
+# rename the data
+rename_evds = c("date", "dollar_selling", "euro_selling", "cpty_ute_mfg", "unemp_rate")
+setnames(evds, names(evds), rename_evds)
+
+csv_path = '/Users/nevalgunal/Downloads/multiTimeline.csv'
+
+# import data
+trends=fread(csv_path, skip = 1)
+
+# rename the data
+rename_gt = c("date", "sv_jobs_turkey")
+names(trends) = rename_gt
+
+# display the head of the data
+head(trends, 5)
+
+# merge the data
+merged_data = merge(evds, trends, fill=NA, join = "left")
+
+# check missing points
+sum(is.na(merged_data))
+colSums(is.na(merged_data))
+rowSums(is.na(merged_data))
+tail(merged_data)
+
+# it is found that missing values belong to last 3 months
+# due to pandemic, last three months' data will not provide 
+# desired contribution to the analysis. Therefore, it is wisely
+# to omit rows with NA values.
+data_omit = na.omit(merged_data)
+str(data_omit)          
+
+# create date object
+dates = data_omit$date
+date_object = anydate(dates)
+dates_format = as.Date(date_object,"%Y-%m")
+str(dates_format)
+
+data_omit$date=dates_format
+data_omit$sv_jobs_turkey=as.numeric(data_omit$sv_jobs_turkey)
+str(data_omit)
+
+subset_data_omit = subset(data_omit, data_omit$date>= "2015-01-01")
+str(subset_data_omit)
+
+# create the xts object
+time_series = xts(subset_data_omit, order.by = subset_data_omit$date)
+is.xts(time_series)
+str(time_series)
+
+```
+
+# After, the interrelationship between data is observed with the code given below.
+
+```{r}
+# observe the relationship between data
+pairs(subset_data_omit, main = "Interrelationship Between Data", labels = c("Date", "Dollar Selling Level","Euro Selling Level","Capacity Utilization Rate","Unemployment Rate","Search Volume"))
+```
+#                   Figure 1: Interrelationship Between Data
+
+#  It is seen that dollar selling level and euro selling level are highly correlated. Therefore, the correlations between dollar selling level and data related to economic indicators, which are level of seaonally adjusted capacity utilization rate of manufacturing industry as well as unemployment rate and search volume of job advertisement on Google from Turkey, will be similar to the correlationa between euro selling level and data related to economic indicators. The change of exchange rates over time and related codes are shown in the figure below.
+
+```{r}
+# plot the change of exchange rates over time
+ts.plot(cbind(time_series$dollar_selling,time_series$euro_selling), main = "The Change of Exhange Rates over Time", xlab="Date", ylab="Exhange Rates", col= c(rgb(0.2,0.4,0.1,0.7),rgb(0.8,0.4,0.1,0.7)))
+legend("topleft", legend= c("Dollar Selling Level", "Euro Selling Level"), col = c(rgb(0.2,0.4,0.1,0.7),rgb(0.8,0.4,0.1,0.7)), pch=16)
+```
+#                    Figure 2: The Change of Exhange Rates over Time
+
+#  From the figure, it can be said that the dollar selling level and euro selling level show similar patterns and they have significantly increased in last 5 years. For further analysis, these relationships are seperately investigated. 
+
+```{r}
+# correlation calculations
+# correlation between dollar selling and other elements
+cor_dol_euro = cor(subset_data_omit$dollar_selling,subset_data_omit$euro_selling)
+cor_dol_cpty = cor(subset_data_omit$dollar_selling,subset_data_omit$cpty_ute_mfg)
+cor_dol_ur = cor(subset_data_omit$dollar_selling,subset_data_omit$unemp_rate)
+cor_dol_sv = cor(subset_data_omit$dollar_selling,subset_data_omit$sv_jobs_turkey)
+corr_dol = cbind(cor_dol_euro,cor_dol_cpty,cor_dol_ur,cor_dol_sv)
+corrplot(corr_dol,main="Correlation of Dollar Selling Level with Other Elements in Data")
+
+```
+#   Figure 3: Correlation of Dollar Selling Level with Other Elements in Data
+
+#  The figure shows that level of dollar selling and euro selling has strongly correlation with one another, which is equal to 0.993. On the other hand, level of seaonally adjusted capacity utilization rate of manufacturing industry and level of dollar selling is negatively correlated. The correlation factor is -0.448, so they have moderately negative correlation. Also, level of dollar selling level has positive correlation with unemployment rate and the search volume of job advertisement. The correlation coefficient between level of dollar selling and unemployment rate is 0.710, whereas the correlation coefficient between level of dollar selling and the search volume of job advertisement is 0.745. The small difference between these two correlation coefficients is reasonable. Firstly, there are people who have a job yet looking for a new job. Another reason may be about the TUIK's definition of unemployment. Nevertheless, the coefficients are quite similar.
+
+#  The same analysis is conducted for level of euro selling and plotted coefficient constants as well as related codes are shown in the figure below.
+
+```{r}
+# correlation between euro selling and other elements
+cor_euro_dollar = cor(subset_data_omit$dollar_selling,subset_data_omit$euro_selling)
+cor_euro_cpty = cor(subset_data_omit$euro_selling,subset_data_omit$cpty_ute_mfg)
+cor_euro_ur = cor(subset_data_omit$euro_selling,subset_data_omit$unemp_rate)
+cor_euro_sv = cor(subset_data_omit$euro_selling,subset_data_omit$sv_jobs_turkey)
+corr_euro = cbind(cor_euro_dollar,cor_euro_cpty,cor_euro_ur,cor_euro_sv)
+corrplot(corr_euro,  main="Correlation of Euro Selling Level with Other Elements in Data")
+
+```
+#    Figure 4: Correlation of Euro Selling Level with Other Elements in Data
+
+#  The figure shows similar with the one for level of dollar selling level, yet the correlation coefficients are little higher for the unemployment rate and the the search volume of job advertisement, whereas little lower for the capacity utilization rate. The difference may result from the highly positive correlation of dollar selling level and euro selling level. The correlation coefficients for capacity utilization rate, the unemployment rate and the search volume of job advertisement are -0.418, 0.659, and 0.718, respectively.
+
+#  So far, it is observed that exchange rates have moderately strong positive correlation with the unemployment rate and the search volume of job advertisement. However, the cofficients of correlation between the capacity utilization rate and exchange rates are negative and relatively small. 
+
+#  It is important to check whether the data related to economic indicators is indeed related with one another or not. The correlation between the capacity utilization rate and the other two economic indicators are investigated below.
+
+```{r}
+# check the relationship between capacity utilization rate of 
+# manufacturing industry and unemployment rate as well as 
+# search volume of job advertisement on Google from Turkey
+cor_cpty_ur = cor(subset_data_omit$cpty_ute_mfg,subset_data_omit$unemp_rate)
+cor_cpty_sv = cor(subset_data_omit$cpty_ute_mfg,subset_data_omit$unemp_rate)
+corr_cpty = cbind(cor_cpty_ur, cor_cpty_sv)
+corrplot(corr_cpty, main="Correlation of the Capacity Utilization Rate with the Unemployment Rate and the Search Volume")
+
+```
+#  Figure 5: Correlation of the Capacity Utilization Rate with the Unemployment                                Rate and the Search Volume
+
+#  From the figure, it is observed that the capacity utilization rate has moderately negative correlation with the unemployment rate and the search volume of job advertisement. Both coefficients are about -0.636. The results show that when the unemployment rate increases, the capacity utilization rate decreases. Yet, it is not a perfect positive correlation. It is important to note that it is not a causation, the correlation just gives the relationship.
+
+#  Lastly, the relationship between unemployment rate and the search volume is investigated below.
+
+```{r}
+# lastly, check the relationship between unemployment rate and
+# search volume of job advertisement on Google from Turkey
+cor_ur_sv = cor(subset_data_omit$sv_jobs_turkey,subset_data_omit$unemp_rate)
+corr_ur=cbind(cor_ur_sv)
+corrplot(corr_ur, main="Correlation Between the Unemployment Rate and the Search Volume of Job Advertisement")
+```
+# Figure 6: Correlation Between the Unemployment Rate and the Search Volume of Job Advertisement
+
+#  The figure illustrates a positive correlation between the unemployment rate and the search volume, which is expected. The correlation coefficient is equal to 0.788.
+
+## CONCLUSION
+
+# The purpose of the analysis is to observe the relationship between the change of exchange rates and the Turkey's economy in last 5 years. It is found that exchange rates have moderately strong positive correlation with the unemployment rate and the search volume of job advertisement but negative and relatively small correlation with the capacity utilization rate. Also, the TUIK's definition of unemployment as well as people who have a job but looking for a new job may have affected the correlation in a negative way.
+
+## REFERENCES
+
+#[1] "Electronic Online Delivery System" [Online], Available at https://evds2.tcmb.gov.tr/index.php (Accessed in April, 2020)
+#[2] "Google Trends Search for Job Advertisement" [Online], Available at https://trends.google.com/trends/explore?q=i%C5%9F%20ilan%C4%B1&geo=TR (Accessed in April, 2020)
+
+# Reference for code: https://github.com/BU-IE-360/spring20-gunalfiliz/blob/master/Homework%201-%20IE360.R
