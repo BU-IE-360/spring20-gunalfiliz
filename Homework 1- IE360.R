@@ -4,7 +4,7 @@ require(corrplot)
 require(anytime)
 require(xts)
 
-data_path = '/Users/nevalgunal/Downloads/EVDS.xlsx'
+data_path = '/Users/Asus/Downloads/EVDS.xlsx'
 
 # read the data
 dat = read_excel(data_path, sheet='EVDS', n_max=152)
@@ -19,7 +19,7 @@ str(evds)
 rename_evds = c("date", "dollar_selling", "euro_selling", "cpty_ute_mfg", "unemp_rate")
 setnames(evds, names(evds), rename_evds)
 
-csv_path = '/Users/nevalgunal/Downloads/multiTimeline.csv'
+csv_path = '/Users/Asus/Downloads/multiTimeline.csv'
 
 # import data
 trends=fread(csv_path, skip = 1)
@@ -79,7 +79,7 @@ cor_dol_cpty = cor(subset_data_omit$dollar_selling,subset_data_omit$cpty_ute_mfg
 cor_dol_ur = cor(subset_data_omit$dollar_selling,subset_data_omit$unemp_rate)
 cor_dol_sv = cor(subset_data_omit$dollar_selling,subset_data_omit$sv_jobs_turkey)
 corr_dol = cbind(cor_dol_euro,cor_dol_cpty,cor_dol_ur,cor_dol_sv)
-corrplot(corr_dol,main="Correlation of Dollar Selling Level with Other Elements in Data")
+corrplot(corr_dol)
 
 # correlation between euro selling and other elements
 cor_euro_dollar = cor(subset_data_omit$dollar_selling,subset_data_omit$euro_selling)
@@ -87,7 +87,7 @@ cor_euro_cpty = cor(subset_data_omit$euro_selling,subset_data_omit$cpty_ute_mfg)
 cor_euro_ur = cor(subset_data_omit$euro_selling,subset_data_omit$unemp_rate)
 cor_euro_sv = cor(subset_data_omit$euro_selling,subset_data_omit$sv_jobs_turkey)
 corr_euro = cbind(cor_euro_dollar,cor_euro_cpty,cor_euro_ur,cor_euro_sv)
-corrplot(corr_euro,  main="Correlation of Euro Selling Level with Other Elements in Data")
+corrplot(corr_euro)
 
 # check the relationship between capacity utilization rate of 
 # manufacturing industry and unemployment rate as well as 
@@ -95,10 +95,10 @@ corrplot(corr_euro,  main="Correlation of Euro Selling Level with Other Elements
 cor_cpty_ur = cor(subset_data_omit$cpty_ute_mfg,subset_data_omit$unemp_rate)
 cor_cpty_sv = cor(subset_data_omit$cpty_ute_mfg,subset_data_omit$unemp_rate)
 corr_cpty = cbind(cor_cpty_ur, cor_cpty_sv)
-corrplot(corr_cpty, main="Correlation of the Capacity Utilization Rate with the Unemployment Rate and the Search Volume")
+corrplot(corr_cpty)
 
 # lastly, check the relationship between unemployment rate and
 # search volume of job advertisement on Google from Turkey
 cor_ur_sv = cor(subset_data_omit$sv_jobs_turkey,subset_data_omit$unemp_rate)
 corr_ur=cbind(cor_ur_sv)
-corrplot(corr_ur, main="Correlation Between the Unemployment Rate and the Search Volume of Job Advertisement")
+corrplot(corr_ur)
