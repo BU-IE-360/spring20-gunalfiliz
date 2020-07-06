@@ -10,3 +10,6 @@
 
 ## Homework 4&5
 [Here](https://github.com/BU-IE-360/spring20-gunalfiliz/blob/master/Homework-4%265.html) is Homework 4&5 in HTML format and [Here](https://htmlpreview.github.io/?https://github.com/BU-IE-360/spring20-gunalfiliz/blob/master/Homework-4%265.html) is the preview.
+
+## Project Report (Group 5)
+[Here](https://github.com/BU-IE-360/spring20-gunalfiliz/blob/master/IE360_Project_Group5.html) is the project report of Group 5 and [Here](https://htmlpreview.github.io/?https://github.com/BU-IE-360/spring20-gunalfiliz/blob/master/IE360_Project_Group5.html) is the preview.
